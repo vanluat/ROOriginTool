@@ -10,21 +10,21 @@ struct Assertion {
 };
 extern "C" __declspec(dllexport) const char* Decode(const char* data, int len,int* outLen);
 
-//BOOL APIENTRY DllMain( HMODULE hModule,
-//                       DWORD  ul_reason_for_call,
-//                       LPVOID lpReserved
-//)
-//{
-//    switch (ul_reason_for_call)
-//    {
-//    case DLL_PROCESS_ATTACH:
-//    case DLL_THREAD_ATTACH:
-//    case DLL_THREAD_DETACH:
-//    case DLL_PROCESS_DETACH:
-//        break;
-//    }
-//    return TRUE;
-//}
+BOOL APIENTRY DllMain( HMODULE hModule,
+                       DWORD  ul_reason_for_call,
+                       LPVOID lpReserved
+)
+{
+    switch (ul_reason_for_call)
+    {
+    case DLL_PROCESS_ATTACH:
+    case DLL_THREAD_ATTACH:
+    case DLL_THREAD_DETACH:
+    case DLL_PROCESS_DETACH:
+        break;
+    }
+    return TRUE;
+}
 
 void assert(const bool& assertion, const std::string& message, const std::string& filePath, const std::string& function, const std::string& source, const uint32_t& line) {
     if (!assertion) throw Assertion{ .message = "Error running " + function + "()\nSource: " + source + ":" + std::to_string(line) + "\n\nFile: " + filePath + "\n\n" + message };
@@ -63,14 +63,14 @@ __declspec(dllexport) const char* Decode(const char* data, int len, int* outLen)
         Ast ast(bytecode);
         //printf("ast\r\n");
         Lua lua(bytecode, ast);
-        printf("lua\r\n");
+        //printf("lua\r\n");
 
         bytecode();
-        printf("do bytecode\r\n");
+        //printf("do bytecode\r\n");
         ast();
-        printf("do ast\r\n");
+        //printf("do ast\r\n");
         lua();
-        printf("do lua\r\n");
+       // printf("do lua\r\n");
         *outLen = lua.GetOutSize();
 
         //printf("do lua\r\n");

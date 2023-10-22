@@ -37,44 +37,44 @@ Ast::Expression*& Ast::new_expression(const AST_EXPRESSION& type) {
 
 void Ast::operator()() {
 	//print_progress_bar();
-	std::cout << "Ast::operator() 1" << std::endl;
+	//std::cout << "Ast::operator() 1" << std::endl;
 	chunk = new_function(*bytecode.main);
 	if (bytecode.header.version == Bytecode::BC_VERSION_2) isFR2Enabled = bytecode.header.flags & Bytecode::BC_F_FR2;
 	prototypeDataLeft = bytecode.prototypesTotalSize;
 	uint32_t functionCounter = 0;
-	std::cout << "Ast::operator() 2" << std::endl;
+	//std::cout << "Ast::operator() 2" << std::endl;
 	build_functions(*chunk, functionCounter);
-	std::cout << "Ast::operator() 3" << std::endl;
+	//std::cout << "Ast::operator() 3" << std::endl;
 	functions.shrink_to_fit();
-	std::cout << "Ast::operator() 4" << std::endl;
+	//std::cout << "Ast::operator() 4" << std::endl;
 	statements.shrink_to_fit();
-	std::cout << "Ast::operator() 5" << std::endl;
+	//std::cout << "Ast::operator() 5" << std::endl;
 	expressions.shrink_to_fit();
-	std::cout << "Ast::operator() 6" << std::endl;
+	//std::cout << "Ast::operator() 6" << std::endl;
 	//erase_progress_bar();
 }
 
 void Ast::build_functions(Function& function, uint32_t& functionCounter) {
 	function.id = functionCounter;
 	functionCounter++;
-	std::cout << "function count : " << functionCounter << std::endl;
+	//std::cout << "function count : " << functionCounter << std::endl;
 	build_instructions(function);
-	std::cout << "build_instructions "<< std::endl;
+	//std::cout << "build_instructions "<< std::endl;
 	function.usedGlobals.shrink_to_fit();
 	if (!function.hasDebugInfo) function.slotScopeCollector.build_upvalue_scopes();
 	collect_slot_scopes(function, function.block, nullptr);
 
-	std::cout << "collect_slot_scopes " << std::endl;
+	//std::cout << "collect_slot_scopes " << std::endl;
 	assert(function.slotScopeCollector.assert_scopes_closed(), "Failed to close slot scopes", "DECODE", DEBUG_INFO);
 
-	std::cout << "collect_slot_scopes1 " << std::endl;
+	//std::cout << "collect_slot_scopes1 " << std::endl;
 	eliminate_slots(function, function.block, nullptr);
 
-	std::cout << "eliminate_slots " << std::endl;
+	//std::cout << "eliminate_slots " << std::endl;
 	eliminate_conditions(function, function.block, nullptr);
-	std::cout << "eliminate_conditions " << std::endl;
+	//std::cout << "eliminate_conditions " << std::endl;
 	build_if_statements(function, function.block, nullptr);
-	std::cout << "build_if_statements " << std::endl;
+	//std::cout << "build_if_statements " << std::endl;
 	clean_up(function);
 	function.block.shrink_to_fit();
 	prototypeDataLeft -= function.prototype.prototypeSize;
@@ -1425,19 +1425,19 @@ void Ast::collect_slot_scopes(Function& function, std::vector<Statement*>& block
 
 void Ast::eliminate_slots(Function& function, std::vector<Statement*>& block, BlockInfo* const& previousBlock) {
 
-	std::cout << "	Ast::eliminate_slots ENTER  " << std::endl;
+	//std::cout << "	Ast::eliminate_slots ENTER  " << std::endl;
 	BlockInfo blockInfo = { .block = block, .previousBlock = previousBlock };
 	Expression* expression;
 	uint32_t index, targetIndex, targetLabel, extendedTargetLabel;
 	bool hasBoolConstruct;
-	if (previousBlock != nullptr)
-		std::cout << "Ast::eliminate_slots child:  " << block.size() << previousBlock->index << std::endl;
-	else
-		std::cout << "Ast::eliminate_slots main:  " << block.size() << std::endl;
+	//if (previousBlock != nullptr)
+	//	std::cout << "Ast::eliminate_slots child:  " << block.size() << previousBlock->index << std::endl;
+	//else
+	//	std::cout << "Ast::eliminate_slots main:  " << block.size() << std::endl;
 
 	for (uint32_t i = 0; i < block.size(); i++) {
 
-		std::cout << "	Ast::eliminate_slots :  " << block[i]->type << std::endl;
+		//std::cout << "	Ast::eliminate_slots :  " << block[i]->type << std::endl;
 		switch (block[i]->type) {
 		case AST_STATEMENT_CONDITION:
 			if (block[i]->condition.allowSlotSwap
@@ -1459,7 +1459,7 @@ void Ast::eliminate_slots(Function& function, std::vector<Statement*>& block, Bl
 		case AST_STATEMENT_DECLARATION:
 			while (i && !function.is_valid_label(block[i]->instruction.label)) {
 
-				std::cout << "		AST_STATEMENT_DECLARATION :  " << block[i - 1]->type << std::endl;
+				//std::cout << "		AST_STATEMENT_DECLARATION :  " << block[i - 1]->type << std::endl;
 				switch (block[i - 1]->type) {
 				case AST_STATEMENT_ASSIGNMENT:
 					if (block[i - 1]->assignment.variables.front().slot <= block[i]->assignment.expressions[block[i]->assignment.openSlots.size() - 1]->variable->slot) 
@@ -1504,7 +1504,7 @@ void Ast::eliminate_slots(Function& function, std::vector<Statement*>& block, Bl
 				for (uint32_t j = block[i]->assignment.openSlots.size(); j--;) {
 					block[i]->assignment.openSlots[j] = &block[i]->assignment.expressions[j];
 				}
-				std::cout << "		AST_STATEMENT_DECLARATION :  " << block[i - 1]->type << " END2" << std::endl;
+				//std::cout << "		AST_STATEMENT_DECLARATION :  " << block[i - 1]->type << " END2" << std::endl;
 				break;
 			}
 
@@ -1575,7 +1575,7 @@ void Ast::eliminate_slots(Function& function, std::vector<Statement*>& block, Bl
 			&& block[i - 1]->function
 			&& block[i - 1]->function->assignmentSlotIsUpvalue
 			&& block[i - 1]->assignment.variables.back().slot == (*block[i]->assignment.openSlots.back())->variable->slot) {
-			std::cout << "		AST_STATEMENT_DECLARATION :  " << block[i - 1]->type << " END3" << std::endl;
+			//std::cout << "		AST_STATEMENT_DECLARATION :  " << block[i - 1]->type << " END3" << std::endl;
 			*block[i]->assignment.openSlots.back() = block[i - 1]->assignment.expressions.back();
 			*block[i - 1]->assignment.variables.back().slotScope = *block[i]->assignment.variables.back().slotScope;
 			block[i]->instruction.label = block[i - 1]->instruction.label;
@@ -1591,7 +1591,7 @@ void Ast::eliminate_slots(Function& function, std::vector<Statement*>& block, Bl
 				&& block[i - 1]->assignment.variables.size() == 1
 				&& block[i - 1]->assignment.variables.back().type == AST_VARIABLE_SLOT
 				&& (*block[i - 1]->assignment.variables.back().slotScope)->usages == 1;) {
-				std::cout << "		!AST_STATEMENT_DECLARATION~ :  " << block[i - 1]->type << " END4  " <<j << std::endl;
+				//std::cout << "		!AST_STATEMENT_DECLARATION~ :  " << block[i - 1]->type << " END4  " <<j << std::endl;
 				if (j == 1
 					&& block[i]->assignment.isPotentialMethod
 					&& i >= 2
@@ -1613,7 +1613,7 @@ void Ast::eliminate_slots(Function& function, std::vector<Statement*>& block, Bl
 					&& block[i - 2]->assignment.expressions.back()->type == AST_EXPRESSION_VARIABLE
 					&& block[i - 2]->assignment.expressions.back()->variable->type == AST_VARIABLE_SLOT
 					&& block[i - 2]->assignment.expressions.back()->variable->slot == block[i - 1]->assignment.expressions.back()->variable->table->variable->slot) {
-					std::cout << "		!AST_STATEMENT_DECLARATION :  " << block[i - 2]->type << " END5  " << j << std::endl;
+					//std::cout << "		!AST_STATEMENT_DECLARATION :  " << block[i - 2]->type << " END5  " << j << std::endl;
 
 					if (block[i]->type == AST_STATEMENT_RETURN) {
 						block[i]->assignment.multresReturn->functionCall->isMethod = true;
@@ -1631,24 +1631,24 @@ void Ast::eliminate_slots(Function& function, std::vector<Statement*>& block, Bl
 					i--;
 					block.erase(block.begin() + i - 1);
 				}
-				std::cout << "		!AST_STATEMENT_DECLARATION :  " << block[i - 1]->type << " END6  " << j << std::endl;
+				//std::cout << "		!AST_STATEMENT_DECLARATION :  " << block[i - 1]->type << " END6  " << j << std::endl;
 
 				if (block[i - 1]->assignment.variables.back().slot != (*block[i]->assignment.openSlots[j])->variable->slot) continue;
 				assert(block[i - 1]->assignment.variables.back().isMultres == (*block[i]->assignment.openSlots[j])->variable->isMultres,
 					"Multres type mismatch when trying to eliminate slot", "DECODE", DEBUG_INFO);
 				expression = *block[i]->assignment.openSlots[j];
 				*block[i]->assignment.openSlots[j] = block[i - 1]->assignment.expressions.back();
-				std::cout << "		!AST_STATEMENT_DECLARATION :  " << " END7 " << j << std::endl;
+				//std::cout << "		!AST_STATEMENT_DECLARATION :  " << " END7 " << j << std::endl;
 
 				if (!j
 					&& block[i]->assignment.allowedConstantType != NUMBER_CONSTANT
 					&& get_constant_type(block[i]->assignment.expressions.back()) > block[i]->assignment.allowedConstantType) {
 					*block[i]->assignment.openSlots[j] = expression;
-					std::cout << "		!AST_STATEMENT_DECLARATION :  "  << " END8 " << std::endl;
+					//std::cout << "		!AST_STATEMENT_DECLARATION :  "  << " END8 " << std::endl;
 
 					break;
 				}
-				std::cout << "		!AST_STATEMENT_DECLARATION :  " << " END9 " << std::endl;
+				//std::cout << "		!AST_STATEMENT_DECLARATION :  " << " END9 " << std::endl;
 
 
 				function.slotScopeCollector.remove_scope(block[i - 1]->assignment.variables.back().slot, block[i - 1]->assignment.variables.back().slotScope);
@@ -1657,11 +1657,11 @@ void Ast::eliminate_slots(Function& function, std::vector<Statement*>& block, Bl
 				block[i]->instruction.label = block[i - 1]->instruction.label;
 				i--;
 				block.erase(block.begin() + i);
-				std::cout << "		!AST_STATEMENT_DECLARATION :  " << " END1111 " << std::endl;
+				//std::cout << "		!AST_STATEMENT_DECLARATION :  " << " END1111 " << std::endl;
 
 
 			}
-			std::cout << "		!AST_STATEMENT_DECLARATION :  " << " END1112 " << std::endl;
+			//std::cout << "		!AST_STATEMENT_DECLARATION :  " << " END1112 " << std::endl;
 		}
 
 		assert(!block[i]->assignment.openSlots.size()
@@ -1669,19 +1669,19 @@ void Ast::eliminate_slots(Function& function, std::vector<Statement*>& block, Bl
 			|| !(*block[i]->assignment.openSlots.back())->variable->isMultres,
 			"Unable to eliminate multres slot", "DECODE", DEBUG_INFO);
 
-		std::cout << "		!AST_STATEMENT_DECLARATION :  " << " END1113 " << std::endl;
+		//std::cout << "		!AST_STATEMENT_DECLARATION :  " << " END1113 " << std::endl;
 		switch (block[i]->type) {
 		case AST_STATEMENT_NUMERIC_FOR:
 		case AST_STATEMENT_GENERIC_FOR:
-			std::cout << "		!AST_STATEMENT_GENERIC_FOR :  " << " END1113 " << std::endl;
+			//std::cout << "		!AST_STATEMENT_GENERIC_FOR :  " << " END1113 " << std::endl;
 			eliminate_slots(function, block[i]->block, nullptr);
 			break;
 		case AST_STATEMENT_LOOP:
 		case AST_STATEMENT_DECLARATION:
 			blockInfo.index = i;
-			std::cout << "		!AST_STATEMENT_DECLARATION :  " << " END1114 " << std::endl;
+			//std::cout << "		!AST_STATEMENT_DECLARATION :  " << " END1114 " << std::endl;
 			eliminate_slots(function, block[i]->block, &blockInfo);
-			std::cout << "		!AST_STATEMENT_DECLARATION :  " << " END1115 " << std::endl;
+			//std::cout << "		!AST_STATEMENT_DECLARATION :  " << " END1115 " << std::endl;
 			break;
 		case AST_STATEMENT_ASSIGNMENT:
 			if (block[i]->assignment.variables.size() == 1) {
@@ -2019,7 +2019,7 @@ void Ast::eliminate_slots(Function& function, std::vector<Statement*>& block, Bl
 		}
 	}
 
-	std::cout << "END FUN" << std::endl;
+	//std::cout << "END FUN" << std::endl;
 }
 
 void Ast::eliminate_conditions(Function& function, std::vector<Statement*>& block, BlockInfo* const& previousBlock) {
