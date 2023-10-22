@@ -1,0 +1,12 @@
+{
+	"MoonGameLibPath": "G:/ROLOz/ROLOz/RO/rogamelibs",
+	"MoonServerPath": "G:/ROLOz/ROLOz/RO/roserver",
+	"MoonClientProjPath": "G:/ROLOz/ROLOz/RO/clientproj",
+	"MoonResPath": "G:/ROLOz/ROLOz/RO/clientproj/Assets/artres",
+	"MoonClientCodePath": "G:/ROLOz/ROLOz/RO/clientcode",
+	"MoonClientConfigPath": "G:/ROLOz/ROLOz/RO/config",
+	"MoonABPath": "G:/ROLOz/ROLOz/RO/roab",
+	"MoonClientPackProjPath": "G:/ROLOz/ROLOz/RO/clientpackproj",
+	"MoonSdkLibPath": "G:/ROLOz/ROLOz/RO/rosdk",
+	"OfficialPath": "G:\\ROLOz\\ROLOz\\Tools\\ROTool\\ExtractOfficialAssets\\bin\\Debug\\net7.0"
+}
