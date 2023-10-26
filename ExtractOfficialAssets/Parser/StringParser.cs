@@ -12,14 +12,9 @@ namespace Serializer
         {
             if(!isColloctString)
             {
-                if (value == null)
-                {
-                   // ToolLib.Context.Logger.Error($"value is null!!!");
-                }
-                else
-                {
-                    writer.Write(value);
-                }
+                dictStringToHash.TryGetValue(value, out var hash);
+                writer.Write(hash);
+               
             }
         }
 

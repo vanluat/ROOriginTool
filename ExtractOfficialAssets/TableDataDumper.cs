@@ -9,13 +9,20 @@ public class TableDataDumper
 {
     private static TableDumpData data;
 
-    public static TableDumpData DumpTable(string dataPath)
+    public static TableDumpData? DumpTable(string dataPath,bool isNew=true)
     {
-        using (FileStream input = new FileStream(dataPath, FileMode.Open))
+        try
         {
-            using (BinaryReader reader = new BinaryReader((Stream)input))
-                return DumpTable(reader);
+            using FileStream input = new FileStream(dataPath, FileMode.Open);
+            using BinaryReader reader = new BinaryReader((Stream)input);
+            return DumpTable(reader,isNew);
         }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            return null;
+        }
+      
     }
 
     private static int ReadHeadInfo(TableDumpData dumpData, BinaryReader reader)
@@ -35,10 +42,11 @@ public class TableDataDumper
             data.FieldInfos[index].FieldType = typeEnum;
             sbyte seqLength = reader.ReadSByte();
             data.FieldInfos[index].SeqLength = seqLength;
-            Debug.WriteLine($"{index} : {typeEnum} ({seqLength}) hash : {data.FieldInfos[index].Hash} ");
+            Console.WriteLine($"{index} : {typeEnum} ({seqLength}) hash : {data.FieldInfos[index].Hash} ");
             object obj;
             ParserUtil.GetParser(typeEnum, seqLength).Read(ref dumpData.dictHashToString, reader, out obj);
             data.FieldInfos[index].DefaultValue = obj.ToString();
+            data.FieldInfos[index].DefaultValueOrigin = obj;
         }
         return num;
     }
@@ -47,6 +55,7 @@ public class TableDataDumper
     {
         data.RowNumber = reader.ReadInt32();
         data.Body = new string?[data.RowNumber, maxHash + 1];
+        data.BodyOrigin = new object[data.RowNumber, maxHash + 1];
         TableDumpData.FieldInfo[] fieldInfos = data.FieldInfos;
         data.FieldInfos = fieldInfos.ToArray();
         for (int index1 = 0; index1 < data.RowNumber; ++index1)
@@ -58,11 +67,12 @@ public class TableDataDumper
                 ParserUtil.GetParser(fieldInfo.FieldType, fieldInfo.SeqLength).Read(ref dumpData.dictHashToString, reader, out obj);
                 int fieldType = (int)fieldInfo.FieldType;
                 data.Body[index1, fieldInfo.Hash] = DumpItem(obj, (TableTypeEnum)fieldType);
+                data.BodyOrigin[index1, fieldInfo.Hash] = obj;
             }
         }
     }
 
-    public static TableDumpData DumpTable(BinaryReader reader)
+    public static TableDumpData DumpTable(BinaryReader reader,bool isNew= true)
     {
         data = new TableDumpData();
         data.Size = reader.ReadInt64();
@@ -70,7 +80,11 @@ public class TableDataDumper
         data.hashTime = reader.ReadUInt64();
         TableUtil.ReadStringInfo(reader, out data.totalStringNum, out data.dictHashToString);
         int maxHash = ReadHeadInfo(data, reader);
-       var uk= reader.ReadInt64();
+        if (isNew)
+        {
+            data.RemoveOffset = (int)reader.BaseStream.Position;
+            data.EndOffset = reader.ReadInt64();
+        }
         ReadBodyInfo(data, reader, maxHash);
         return data;
     }

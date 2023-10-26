@@ -1,3 +1,4 @@
+using ExtractOfficialAssets;
 using Newtonsoft.Json;
 
 namespace AssetsUpdate
@@ -66,13 +67,3 @@ namespace AssetsUpdate
 
 }
 
-public class LanguageWrap
-{
-    public List<LanguageRecord> data;
-}
-
-public class LanguageRecord
-{
-    public uint id;
-    public string val;
-}

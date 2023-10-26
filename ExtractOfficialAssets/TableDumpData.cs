@@ -12,7 +12,9 @@ public class TableDumpData
     public TableDumpData.FieldInfo[] FieldInfos;
     public int RowNumber;
     public object?[,] Body;
-
+    public object?[,] BodyOrigin;
+    public int RemoveOffset;
+    public long EndOffset;
     public class FieldInfo
     {
         public bool NeedLocal;
@@ -20,5 +22,6 @@ public class TableDumpData
         public TableTypeEnum FieldType;
         public sbyte SeqLength;
         public string DefaultValue;
+        public object DefaultValueOrigin;
     }
 }

@@ -1,0 +1,9 @@
+﻿public enum MUpdateErrCode
+{
+    OK = 1,
+    CHECK_ERROR,
+    HTTP_ERROR,
+    DOWNLOAD_STORAGE_NOT_ENOUGH,
+    UNZIP_FILENOTEXIST,
+    UNZIP_EXCEPTION
+}

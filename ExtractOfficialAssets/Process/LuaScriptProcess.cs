@@ -27,7 +27,6 @@ public class LuaScriptProcess
             string INFO_PATH =
                 $"bytesblock/{id}.bytes";
 
-            Console.WriteLine($"BEGIN DUMP : {fileName} ({id})");
             if (!File.Exists(INFO_PATH))
             {
                 continue;
@@ -35,12 +34,25 @@ public class LuaScriptProcess
             if (!Directory.Exists("Lua"))
                 Directory.CreateDirectory("Lua");
             var dstPath = $"Lua/{f}/{fileName}.lua";
+            if (File.Exists(dstPath))
+            {
+                Console.WriteLine($"Already : {dstPath}");
+                File.Delete(INFO_PATH);
+                continue;
+            }
             var dstFolder = dstPath.Remove(dstPath.LastIndexOf("/"));
             if (!Directory.Exists(dstFolder))
                 Directory.CreateDirectory(dstFolder);
             var data=File.ReadAllBytes(INFO_PATH);
             try
             {
+
+                if (id == 3346012256)
+                {
+                    CopyToUnDecode(dstPath, data);
+                    File.Delete(INFO_PATH);
+                    continue;
+                }
                 fixed (byte* fileData = data)
                 {
                     int outLen = 0;
@@ -55,6 +67,8 @@ public class LuaScriptProcess
             catch (Exception e)
             {
                 Console.WriteLine(e);
+                CopyToUnDecode(dstPath, data);
+                File.Delete(INFO_PATH);
                 continue;
             }
            
@@ -64,8 +78,18 @@ public class LuaScriptProcess
             // read all required
             DumpDepend(data);
             Console.WriteLine($"{dstPath} => OK!");
+            File.Delete(INFO_PATH);
             break;
         }
+    }
+
+    private static void CopyToUnDecode(string dstPath, byte[] data)
+    {
+        var newPath = dstPath.Replace("Lua/", "UnDecodeLua/");
+        var newPathDir  = newPath.Remove(newPath.LastIndexOf("/"));
+        if (!Directory.Exists(newPathDir))
+            Directory.CreateDirectory(newPathDir);
+        File.WriteAllBytes(newPath, data);
     }
 
     private static void DumpDepend(byte[] data)
@@ -77,6 +101,12 @@ public class LuaScriptProcess
         {
             var dependFile = m.Groups[2].Value;
             Dump(dependFile);
+        }
+        match = Regex.Matches(str, @"(DataMgr:GetData\(\""([a-zA-Z0-9_\/\-\.]+)\""\))");
+        foreach (Match m in match)
+        {
+            var dependFile = m.Groups[2].Value;
+            Dump($"ModuleData/{dependFile}");
         }
     }
 }

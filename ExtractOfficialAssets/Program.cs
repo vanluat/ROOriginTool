@@ -2,6 +2,12 @@
 using ExtractOfficialAssets;
 using ExtractOfficialAssets.Process;
 using System.IO;
+using System.Text;
+using System.Text.RegularExpressions;
+using ExtractOfficialAssets.Gen.Enums;
+using ExtractOfficialAssets.Gen.Class;
+using NPOI.SS.Formula.Functions;
+using Match = System.Text.RegularExpressions.Match;
 
 const string ResourcePrePath = "Assets/artres/Resources/";
 uint _PrefixHash = GetLowerHashRelpaceDot(0, ResourcePrePath);
@@ -26,12 +32,93 @@ if (args.Length > 0)
         case "lua":
             LuaScriptProcess.Dump(args[1]);
             break;
+        case "dumpblockbytes":
+            ReadBlockFileInfo();
+            break;
+        case "testtable":
+            TableDataDumper.DumpTable($"TableBytes/{args[1]}.bytes");
+            break;
+        case "decodeluabyte":
+
+            LuaByteProcess.Dump();
+            break;
+        case "movetablebyte":
+            TableProcess.MoveTableByte();
+            break;
+        case "dumplua":
+            LuaScriptProcess.Dump("Main");
+            goto case "uiscript";
+        case "uiscript":
+            // dump UI
+        {
+            var str = File.ReadAllText("Lua\\Scripts\\UI\\UIConst.lua");
+            var content = Regex.Match(str, @"LuaScriptPath = [\{\r\n\s]+([a-zA-Z\=\s0-9\/\""\,_]+)[\}\n\n\s]+");
+            var matchs = Regex.Matches(content.Groups[1].Value, @"""([a-zA-Z0-9\/_]+)""");
+            foreach (Match m in matchs)
+            {
+                var path = m.Groups[1].Value;
+                LuaScriptProcess.Dump(path);
+                }
+        }
+            goto case "uimgr";
+        case "uimgr":
+        {
+            {
+                foreach (string s in new[]{ "Lua\\Scripts\\Event\\MUIEvent.lua", "Lua\\Scripts\\Network\\Network_Init.lua" })
+                {
+                    var str = File.ReadAllText(s);
+                    var matchs = Regex.Matches(str, @"(file = ""([a-zA-Z0-9\/_\.]+)"")");
+                    foreach (Match m in matchs)
+                    {
+                        var path = m.Groups[2].Value;
+                        LuaScriptProcess.Dump(path);
+                    }
+                    }
+                
+            }
+            }
+            break;
+        case "genenum":
+            GenEnumLuaWarp.Gen<UILayer>();
+            break;
+        case "genclass":
+            GenEnumLuaWarp.GenClass<SDKPublicDefine>();
+            break;
+        case "dumpglobaloldtable":
+            var globalTable=TableDataDumper.DumpTable("New Folder/GlobalTable_old.bytes", false);
+            var header = "";
+            foreach (var f in globalTable.FieldInfos)
+            {
+                if (!string.IsNullOrEmpty(header))
+                    header += ",";
+                header += $"{f.Hash}";
+
+            }
+
+            header += "\r\n";
+            for (var i = 0; i < globalTable.RowNumber; i++)
+            {
+                var row = "";
+                foreach (var f in globalTable.FieldInfos)
+                {
+                    if (!string.IsNullOrEmpty(row))
+                        row += ",";
+                    row += $"{globalTable.Body[i, f.Hash]}";
+                }
+
+                row += "\r\n";
+                header += row;
+            }
+            File.WriteAllText("New Folder\\GlobalTableOld.csv",header,Encoding.UTF8);
+            break;
     }
     return 0;
 }
+// TableProcess.MoveTableByte();
+//TableDataDumper.DumpTable($"New Folder/GlobalTable.bytes");
+//TableProcess.DumpTable("GlobalTable");
 
-Console.Read();
-LuaScriptProcess.Dump("Main");
+GenEnumLuaWarp.Gen<ESDKBridge>();
 return 0;
 var targetLang = MGameLanguage.English;
 const string LocalizationPath = "Localization";
@@ -88,7 +175,7 @@ void DumpTable()
 void ReadBlockFileInfo()
 {
 
-
+    var luaScriptCount = 0;
     const string INFO_PATH =
         "F:\\Downloads\\GameLauncher\\ROO_PC\\ro_Data\\StreamingAssets\\Unzips\\BYTES_BLOCK";
 
@@ -146,7 +233,20 @@ void ReadBlockFileInfo()
             foreach (var b in BlockAssetBundleInfos.Values)
             {
                 dicStream[b.fileId].BaseStream.Seek(b.offset, SeekOrigin.Begin);
-                File.WriteAllBytes($"bytesblock\\{b.fullName}.bytes", dicStream[b.fileId].ReadBytes((int)b.length));
+                var fileData = dicStream[b.fileId].ReadBytes((int)b.length);
+                if (fileData.Length >4&&fileData[0] == 0x1B &&
+                    fileData[1] == 0x4C &&
+                    fileData[2] == 0x4A &&
+                    fileData[3] == 0x2)
+                {
+                    luaScriptCount++;
+                    if (!Directory.Exists("luabytes"))
+                    {
+                        Directory.CreateDirectory("luabytes");
+                    }
+                    File.WriteAllBytes($"luabytes\\{b.fullName}.bytes", fileData);
+                }
+                File.WriteAllBytes($"bytesblock\\{b.fullName}.bytes", fileData);
             }
         }
 
@@ -154,6 +254,8 @@ void ReadBlockFileInfo()
         {
             binaryReader.Value.Dispose();
         }
+
+        Console.WriteLine($"Lua script count : {luaScriptCount}");
     }
     catch
     {
